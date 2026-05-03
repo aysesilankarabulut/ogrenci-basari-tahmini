@@ -1,0 +1,13 @@
+Öğrenci Başarı Analizi Raporu
+--------------------------------
+
+Toplam öğrenci sayısı: 30
+Ortalama final notu: 68.20
+En yüksek final notu: 95
+En düşük final notu: 39
+
+Geçti / Kaldı Dağılımı:
+result
+Passed    20
+Failed    10
+Name: count, dtype: int64
