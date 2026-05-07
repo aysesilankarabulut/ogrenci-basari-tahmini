@@ -1,0 +1,65 @@
+Öğrenci Başarı Analizi Raporu
+========================================
+
+1. Veri Seti Tanıtımı
+--------------------
+Toplam öğrenci sayısı: 30
+Sütunlar: student_id, study_hours, attendance, previous_score, sleep_hours, final_score, result
+
+2. Eksik Veri Kontrolü
+--------------------
+student_id: 0 eksik veri
+study_hours: 0 eksik veri
+attendance: 0 eksik veri
+previous_score: 0 eksik veri
+sleep_hours: 0 eksik veri
+final_score: 0 eksik veri
+result: 0 eksik veri
+
+3. NumPy Hesaplamaları
+--------------------
+Ortalama Final Notu: 68.20
+En Yüksek Final Notu: 95.00
+En Düşük Final Notu: 39.00
+Standart Sapma: 16.01
+
+4. Pandas Analizleri
+--------------------
+Ortalama final notu: 68.20
+Geçti/Kaldı dağılımı:
+  Passed: 20
+  Failed: 10
+
+5. Grafik Yorumları
+--------------------
+- Final notlarının dağılımı histogramı oluşturuldu.
+- Çalışma saati ve final notu ilişkisi scatter plot'u oluşturuldu.
+- Geçti/Kaldı dağılımı bar chart'ı oluşturuldu.
+
+6. Model Açıklaması
+--------------------
+Kullanılan model: Logistic Regression
+Hedef değişken: Öğrenci sonucu (Passed/Failed)
+Giriş özellikleri: study_hours, attendance, previous_score, sleep_hours, final_score
+
+7. Model Başarı Sonucu
+--------------------
+Doğruluk (Accuracy): 1.00
+Karmaşıklık Matrisi:
+  [3, 0]
+  [0, 3]
+
+Sınıflandırma Raporu:
+              precision    recall  f1-score   support
+
+           0       1.00      1.00      1.00         3
+           1       1.00      1.00      1.00         3
+
+    accuracy                           1.00         6
+   macro avg       1.00      1.00      1.00         6
+weighted avg       1.00      1.00      1.00         6
+
+8. Genel Değerlendirme
+--------------------
+Sınıfın genel başarı seviyesi iyidir.
+Model performansı göz önünde bulundurulduğunda, öğrenci başarısını tahmin etmek için kullanılabilir.

@@ -1,205 +1,113 @@
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import os
-
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
-
-class DataLoader:
-    def __init__(self, file_path):
-        self.file_path = file_path
-
-    def load_data(self):
-        try:
-            data = pd.read_csv(self.file_path)
-            print("Veri seti başarıyla yüklendi.")
-            return data
-        except FileNotFoundError:
-            print("Hata: Veri seti dosyası bulunamadı.")
-            return None
-        except Exception as error:
-            print("Beklenmeyen bir hata oluştu:", error)
-            return None
-
-
-class DataAnalyzer:
-    def __init__(self, data):
-        self.data = data
-
-    def show_basic_info(self):
-        print("\n--- İlk 5 Satır ---")
-        print(self.data.head())
-
-        print("\n--- Veri Seti Bilgisi ---")
-        print(self.data.info())
-
-        print("\n--- Eksik Veri Kontrolü ---")
-        print(self.data.isnull().sum())
-
-        print("\n--- Genel İstatistiksel Özet ---")
-        print(self.data.describe())
-
-    def calculate_numpy_statistics(self):
-        final_scores = self.data["final_score"].to_numpy()
-
-        statistics = {
-            "Ortalama Final Notu": np.mean(final_scores),
-            "En Yüksek Final Notu": np.max(final_scores),
-            "En Düşük Final Notu": np.min(final_scores),
-            "Standart Sapma": np.std(final_scores)
-        }
-
-        print("\n--- NumPy ile Hesaplanan İstatistikler ---")
-        for title, value in statistics.items():
-            print(f"{title}: {value:.2f}")
-
-        return statistics
-
-    def analyze_results(self):
-        print("\n--- Geçti / Kaldı Dağılımı ---")
-        print(self.data["result"].value_counts())
-
-        average_score = self.data["final_score"].mean()
-
-        print("\n--- Genel Başarı Yorumu ---")
-        if average_score >= 60:
-            print("Sınıfın genel başarı ortalaması yeterli seviyededir.")
-        else:
-            print("Sınıfın genel başarı ortalaması düşük seviyededir.")
-
-
-class Visualizer:
-    def __init__(self, data, graph_folder):
-        self.data = data
-        self.graph_folder = graph_folder
-        os.makedirs(self.graph_folder, exist_ok=True)
-
-    def create_final_score_histogram(self):
-        plt.figure(figsize=(8, 5))
-        plt.hist(self.data["final_score"], bins=8)
-        plt.title("Final Notlarının Dağılımı")
-        plt.xlabel("Final Notu")
-        plt.ylabel("Öğrenci Sayısı")
-        plt.savefig(os.path.join(self.graph_folder, "final_notlari_histogram.png"))
-        plt.close()
-
-    def create_study_hours_graph(self):
-        plt.figure(figsize=(8, 5))
-        plt.scatter(self.data["study_hours"], self.data["final_score"])
-        plt.title("Çalışma Saati ve Final Notu İlişkisi")
-        plt.xlabel("Haftalık Çalışma Saati")
-        plt.ylabel("Final Notu")
-        plt.savefig(os.path.join(self.graph_folder, "calisma_saati_final_notu.png"))
-        plt.close()
-
-    def create_attendance_graph(self):
-        plt.figure(figsize=(8, 5))
-        plt.scatter(self.data["attendance"], self.data["final_score"])
-        plt.title("Derse Devam Oranı ve Final Notu İlişkisi")
-        plt.xlabel("Derse Devam Oranı")
-        plt.ylabel("Final Notu")
-        plt.savefig(os.path.join(self.graph_folder, "devam_orani_final_notu.png"))
-        plt.close()
-
-    def create_all_graphs(self):
-        self.create_final_score_histogram()
-        self.create_study_hours_graph()
-        self.create_attendance_graph()
-        print("\nGrafikler başarıyla oluşturuldu ve outputs/graphs klasörüne kaydedildi.")
-
-class ModelTrainer:
-    def __init__(self, data):
-        self.data = data
-        self.model = LinearRegression()
-
-    def train_model(self):
-        # Modelin kullanacağı giriş verileri
-        X = self.data[["study_hours", "attendance", "previous_score", "sleep_hours"]]
-
-        # Modelin tahmin etmeye çalışacağı hedef değer
-        y = self.data["final_score"]
-
-        # Veriyi eğitim ve test olarak ayırma
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=0.2, random_state=42
-        )
-
-        # Modeli eğitme
-        self.model.fit(X_train, y_train)
-
-        # Test verileri üzerinde tahmin yapma
-        predictions = self.model.predict(X_test)
-
-        # Performans metrikleri
-        mae = mean_absolute_error(y_test, predictions)
-        mse = mean_squared_error(y_test, predictions)
-        rmse = np.sqrt(mse)
-        r2 = r2_score(y_test, predictions)
-
-        print("\n--- Makine Öğrenmesi Model Sonuçları ---")
-        print(f"MAE: {mae:.2f}")
-        print(f"MSE: {mse:.2f}")
-        print(f"RMSE: {rmse:.2f}")
-        print(f"R2 Skoru: {r2:.2f}")
-
-        print("\n--- Gerçek ve Tahmin Edilen Notlar ---")
-        for real, predicted in zip(y_test, predictions):
-            print(f"Gerçek Not: {real} - Tahmin Edilen Not: {predicted:.2f}")
-
-        return {
-            "MAE": mae,
-            "MSE": mse,
-            "RMSE": rmse,
-            "R2": r2
-        }
-
-class ReportSaver:
-    def __init__(self, data, report_folder):
-        self.data = data
-        self.report_folder = report_folder
-        os.makedirs(self.report_folder, exist_ok=True)
-
-    def save_text_report(self):
-        report_path = os.path.join(self.report_folder, "summary_report.txt")
-
-        with open(report_path, "w", encoding="utf-8") as file:
-            file.write("Öğrenci Başarı Analizi Raporu\n")
-            file.write("--------------------------------\n\n")
-            file.write(f"Toplam öğrenci sayısı: {len(self.data)}\n")
-            file.write(f"Ortalama final notu: {self.data['final_score'].mean():.2f}\n")
-            file.write(f"En yüksek final notu: {self.data['final_score'].max()}\n")
-            file.write(f"En düşük final notu: {self.data['final_score'].min()}\n\n")
-            file.write("Geçti / Kaldı Dağılımı:\n")
-            file.write(str(self.data["result"].value_counts()))
-
-        print("\nRapor başarıyla kaydedildi:", report_path)
-
+from pathlib import Path
+from data_loader import DataLoader
+from analyzer import DataAnalyzer
+from visualizer import Visualizer
+from model_trainer import ModelTrainer
 
 def main():
-    file_path = "../data/students.csv"
-    graph_folder = "../outputs/graphs"
-    report_folder = "../outputs/reports"
+    """
+    Ana program akışı: veri yükleme, analiz, görselleştirme, model eğitimi ve rapor kaydetme.
+    """
+    # Dosya yolları
+    project_root = Path(__file__).parent.parent
+    data_path = project_root / "data" / "students_performance.csv"
+    graphs_path = project_root / "outputs" / "graphs"
+    reports_path = project_root / "outputs" / "reports"
 
-    loader = DataLoader(file_path)
+    # 1. Veri yükleme
+    loader = DataLoader(data_path)
     data = loader.load_data()
 
-    if data is not None:
-       analyzer = DataAnalyzer(data)
-       analyzer.show_basic_info()
-       analyzer.calculate_numpy_statistics()
-       analyzer.analyze_results()
+    if data is None:
+        print("Program sonlandırılıyor: Veri yüklenemedi.")
+        return
 
-       visualizer = Visualizer(data, graph_folder)
-       visualizer.create_all_graphs()
+    # 2. Veri analizi
+    analyzer = DataAnalyzer(data)
+    analyzer.show_basic_statistics()
+    numpy_stats = analyzer.calculate_numpy_statistics()
+    analysis_results = analyzer.analyze_results()
 
-       model_trainer = ModelTrainer(data)
-       model_trainer.train_model()
+    # 3. Görselleştirme
+    visualizer = Visualizer(data, graphs_path)
+    graph_comments = visualizer.create_all_graphs()
 
-       report_saver = ReportSaver(data, report_folder)
-       report_saver.save_text_report()
+    # 4. Model eğitimi
+    model_trainer = ModelTrainer(data)
+    X_train, X_test, y_train, y_test = model_trainer.train_model()
+    model_metrics = model_trainer.evaluate_model(X_test, y_test)
 
+    # 5. Rapor kaydetme
+    save_report(reports_path, data, numpy_stats, analysis_results, graph_comments, model_metrics)
+
+def save_report(report_folder, data, numpy_stats, analysis_results, graph_comments, model_metrics):
+    """
+    Analiz sonuçlarını rapor dosyasına kaydeder.
+    """
+    report_path = report_folder / "project_report.txt"
+    report_folder.mkdir(parents=True, exist_ok=True)
+
+    with open(report_path, "w", encoding="utf-8") as file:
+        file.write("Öğrenci Başarı Analizi Raporu\n")
+        file.write("=" * 40 + "\n\n")
+
+        file.write("1. Veri Seti Tanıtımı\n")
+        file.write("-" * 20 + "\n")
+        file.write(f"Toplam öğrenci sayısı: {len(data)}\n")
+        file.write(f"Sütunlar: {', '.join(data.columns.tolist())}\n\n")
+
+        file.write("2. Eksik Veri Kontrolü\n")
+        file.write("-" * 20 + "\n")
+        missing = data.isnull().sum()
+        for col, count in missing.items():
+            file.write(f"{col}: {count} eksik veri\n")
+        file.write("\n")
+
+        file.write("3. NumPy Hesaplamaları\n")
+        file.write("-" * 20 + "\n")
+        for key, value in numpy_stats.items():
+            file.write(f"{key}: {value:.2f}\n")
+        file.write("\n")
+
+        file.write("4. Pandas Analizleri\n")
+        file.write("-" * 20 + "\n")
+        file.write(f"Ortalama final notu: {analysis_results['ortalama_not']:.2f}\n")
+        file.write("Geçti/Kaldı dağılımı:\n")
+        for result, count in analysis_results['sonuc_dagilimi'].items():
+            file.write(f"  {result}: {count}\n")
+        file.write("\n")
+
+        file.write("5. Grafik Yorumları\n")
+        file.write("-" * 20 + "\n")
+        for comment in graph_comments:
+            file.write(f"- {comment}\n")
+        file.write("\n")
+
+        file.write("6. Model Açıklaması\n")
+        file.write("-" * 20 + "\n")
+        file.write("Kullanılan model: Logistic Regression\n")
+        file.write("Hedef değişken: Öğrenci sonucu (Passed/Failed)\n")
+        file.write("Giriş özellikleri: study_hours, attendance, previous_score, sleep_hours, final_score\n\n")
+
+        file.write("7. Model Başarı Sonucu\n")
+        file.write("-" * 20 + "\n")
+        file.write(f"Doğruluk (Accuracy): {model_metrics['accuracy']:.2f}\n")
+        file.write("Karmaşıklık Matrisi:\n")
+        for row in model_metrics['confusion_matrix']:
+            file.write(f"  {row}\n")
+        file.write("\nSınıflandırma Raporu:\n")
+        file.write(model_metrics['classification_report'])
+        file.write("\n")
+
+        file.write("8. Genel Değerlendirme\n")
+        file.write("-" * 20 + "\n")
+        if analysis_results['ortalama_not'] >= 60:
+            file.write("Sınıfın genel başarı seviyesi iyidir.\n")
+        else:
+            file.write("Sınıfın genel başarı seviyesini iyileştirmek gerekebilir.\n")
+        file.write("Model performansı göz önünde bulundurulduğunda, öğrenci başarısını tahmin etmek için kullanılabilir.\n")
+
+    print(f"\nRapor başarıyla kaydedildi: {report_path}")
 
 if __name__ == "__main__":
     main()
